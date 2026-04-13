@@ -37,15 +37,14 @@ impl WorldClocksState {
         let local = now_utc.with_timezone(&tz);
         let date = local.date_naive();
 
-        if let Some((lat, lon)) = approximate_coords(tz.name()) {
-            if let Some(coord) = Coordinates::new(lat, lon) {
-                if let Some(nd) = NaiveDate::from_ymd_opt(date.year(), date.month(), date.day()) {
-                    let solar = SolarDay::new(coord, nd);
-                    let sunrise = solar.event_time(SolarEvent::Sunrise);
-                    let sunset = solar.event_time(SolarEvent::Sunset);
-                    return now_utc >= sunrise && now_utc < sunset;
-                }
-            }
+        if let Some((lat, lon)) = approximate_coords(tz.name())
+    && let Some(coord) = Coordinates::new(lat, lon)
+    && let Some(nd) = NaiveDate::from_ymd_opt(date.year(), date.month(), date.day())
+        {
+             let solar = SolarDay::new(coord, nd);
+            let sunrise = solar.event_time(SolarEvent::Sunrise);
+            let sunset = solar.event_time(SolarEvent::Sunset);
+            return now_utc >= sunrise && now_utc < sunset;
         }
 
         // Fallback: simple hour-based check
@@ -365,7 +364,7 @@ impl WorldClocksState {
 
                 let reorder_list = ReorderList::new(cards, item_count, self.dragging_index)
                     .on_start_drag(Message::StartDrag)
-                    .on_reorder(|from, to| Message::Reorder(from, to))
+                    .on_reorder(Message::Reorder)
                     .on_finish(Message::FinishDrag)
                     .on_cancel(Message::CancelDrag)
                     .drag_icon(move |index, offset| {

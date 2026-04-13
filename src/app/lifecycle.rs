@@ -2,6 +2,7 @@
 //
 // Implements the `cosmic::Application` trait for `AppModel`.
 
+use std::time::Duration;
 use super::persistence::{restore_alarms, restore_pomodoros, restore_timers, restore_world_clocks};
 use super::subscriptions::{input_subscription, open_sound_file_dialog, tick_subscription};
 use super::{
@@ -243,7 +244,7 @@ impl cosmic::Application for AppModel {
             .height(Length::Fill)
             .padding(16);
 
-        toaster::toaster(&self.toasts, page).into()
+        toaster::toaster(&self.toasts, page)
     }
 
     fn dialog(&self) -> Option<Element<'_, Self::Message>> {
@@ -283,7 +284,17 @@ impl cosmic::Application for AppModel {
                 .map(|update| Message::UpdateConfig(update.config)),
         ];
 
-        subscriptions.push(Subscription::run(tick_subscription));
+    let tick_rate = if self.stopwatch.is_running {
+        // Buttery smooth for hundredths of a second.
+        Duration::from_millis(16)
+        } else if self.timer.has_running_timers() || self.pomodoro.is_running() {
+            // 500ms guarantees it catches the second changing without wasting CPU.
+            Duration::from_millis(500)
+        } else {
+            Duration::from_millis(1000)
+        };
+
+        subscriptions.push(tick_subscription(tick_rate));
         subscriptions.push(listen_raw(input_subscription));
 
         Subscription::batch(subscriptions)
@@ -339,15 +350,13 @@ impl cosmic::Application for AppModel {
                     let id = *id;
                     self.alarm.update(msg.clone(), self.use_12h);
                     // Show toast when alarm is enabled
-                    if let Some(alarm) = self.alarm.alarms.iter().find(|a| a.id == id) {
-                        if alarm.is_enabled {
+                    if let Some(alarm) = self.alarm.alarms.iter().find(|a| a.id == id) && alarm.is_enabled {
                             let alarm = alarm.clone();
                             let task = self.push_alarm_toast(&alarm);
                             self.save_state();
                             return task;
                         }
                     }
-                }
                 alarm::Message::DeleteAlarm(id) => {
                     if self.confirm_delete_alarm && self.pending_destructive_action.is_none() {
                         let id = *id;
@@ -377,15 +386,13 @@ impl cosmic::Application for AppModel {
                     self.alarm.update(msg.clone(), self.use_12h);
                     self.core.window.show_context = false;
                     // Show toast for newly created alarm (enabled by default)
-                    if let Some(alarm) = self.alarm.alarms.last() {
-                        if alarm.is_enabled {
+                    if let Some(alarm) = self.alarm.alarms.last() && alarm.is_enabled {
                             let alarm = alarm.clone();
                             let task = self.push_alarm_toast(&alarm);
                             self.save_state();
                             return task;
                         }
                     }
-                }
                 alarm::Message::BrowseCustomSound => {
                     return open_sound_file_dialog(CustomSoundTarget::Alarm);
                 }
