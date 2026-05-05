@@ -2,9 +2,9 @@
 //
 // Alarm view functions: main page view and sidebar editing form.
 
+use super::Message;
 use super::model::*;
 use super::update::hour24_to_12;
-use super::Message;
 use crate::components::reorder_list::ReorderList;
 use crate::components::sound_selector_view;
 use crate::fl;
@@ -47,13 +47,11 @@ impl AlarmState {
                     .width(Length::Fill);
 
                 // Toggle
-                let toggle = widget::toggler(alarm.is_enabled)
-                    .on_toggle(move |_| Message::ToggleAlarm(id));
+                let toggle =
+                    widget::toggler(alarm.is_enabled).on_toggle(move |_| Message::ToggleAlarm(id));
 
                 // Chevron
-                let chevron = widget::icon::from_name("go-next-symbolic")
-                    .size(16)
-                    .icon();
+                let chevron = widget::icon::from_name("go-next-symbolic").size(16).icon();
 
                 let clickable = widget::row::with_capacity(3)
                     .spacing(spacing)
@@ -109,7 +107,7 @@ impl AlarmState {
                             .width(Length::Fill)
                             .class(cosmic::theme::Container::Custom(Box::new(|theme| {
                                 let accent = Color::from(theme.cosmic().accent_color());
-                                cosmic::iced_widget::container::Style {
+                                cosmic::iced::widget::container::Style {
                                     background: Some(cosmic::iced::Background::Color(accent)),
                                     border: cosmic::iced::Border {
                                         radius: 2.0.into(),
@@ -134,7 +132,7 @@ impl AlarmState {
                                 .size(16)
                                 .icon()
                                 .class(cosmic::theme::Svg::Custom(std::rc::Rc::new(
-                                    |theme: &cosmic::Theme| cosmic::iced_widget::svg::Style {
+                                    |theme: &cosmic::Theme| cosmic::iced::widget::svg::Style {
                                         color: Some(theme.cosmic().palette.neutral_7.into()),
                                     },
                                 )))
@@ -179,7 +177,7 @@ impl AlarmState {
                         .padding(8)
                         .width(Length::Fill)
                         .class(cosmic::theme::Container::Custom(Box::new(move |theme| {
-                            let mut style = cosmic::iced_widget::container::Catalog::style(
+                            let mut style = cosmic::iced::widget::container::Catalog::style(
                                 theme,
                                 &cosmic::theme::Container::Primary,
                             );
@@ -216,16 +214,14 @@ impl AlarmState {
 
                 let reorder_list = ReorderList::new(cards, item_count, self.dragging_index)
                     .on_start_drag(Message::StartDrag)
-                    .on_reorder(|from, to| Message::Reorder(from, to))
+                    .on_reorder(Message::Reorder)
                     .on_finish(Message::FinishDrag)
                     .on_cancel(Message::CancelDrag)
                     .drag_icon(move |index, offset| {
                         let (label, time_str, repeat_str) = alarms_snapshot
                             .get(index)
                             .cloned()
-                            .unwrap_or_else(|| {
-                                ("Alarm".to_string(), String::new(), String::new())
-                            });
+                            .unwrap_or_else(|| ("Alarm".to_string(), String::new(), String::new()));
 
                         let content = widget::row::with_children(vec![
                             widget::icon::from_name("grip-lines-symbolic")
@@ -253,7 +249,7 @@ impl AlarmState {
                             .width(Length::Fill)
                             .class(cosmic::theme::Container::Custom(Box::new(|theme| {
                                 let accent = Color::from(theme.cosmic().accent_color());
-                                let mut style = cosmic::iced_widget::container::Catalog::style(
+                                let mut style = cosmic::iced::widget::container::Catalog::style(
                                     theme,
                                     &cosmic::theme::Container::Primary,
                                 );
@@ -266,7 +262,11 @@ impl AlarmState {
                             })))
                             .into();
 
-                        (card, cosmic::iced_core::widget::tree::State::None, offset)
+                        (
+                            card,
+                            cosmic::iced::advanced::widget::tree::State::None,
+                            offset,
+                        )
                     });
 
                 col = col.push(reorder_list);
@@ -311,7 +311,7 @@ impl AlarmState {
             .size(128)
             .icon()
             .class(cosmic::theme::Svg::Custom(std::rc::Rc::new(
-                |theme: &cosmic::Theme| cosmic::iced_widget::svg::Style {
+                |theme: &cosmic::Theme| cosmic::iced::widget::svg::Style {
                     color: Some(theme.cosmic().palette.neutral_5.into()),
                 },
             )));
@@ -320,10 +320,7 @@ impl AlarmState {
             .spacing(16)
             .align_x(Alignment::Center)
             .push(icon)
-            .push(
-                widget::button::suggested(fl!("create-alarm"))
-                    .on_press(Message::StartNewAlarm),
-            );
+            .push(widget::button::suggested(fl!("create-alarm")).on_press(Message::StartNewAlarm));
 
         widget::container(empty_state)
             .align_x(Alignment::Center)
@@ -352,12 +349,11 @@ impl AlarmState {
         if let Some(edit) = &self.editing {
             // Label
             col = col.push(widget::text::body(fl!("label")));
-            col = col
-                .push(
-                    widget::text_input(fl!("alarm-label-placeholder"), &edit.label)
-                        .id(widget::Id::new("alarm-label-input"))
-                        .on_input(Message::EditLabel),
-                );
+            col = col.push(
+                widget::text_input(fl!("alarm-label-placeholder"), &edit.label)
+                    .id(widget::Id::new("alarm-label-input"))
+                    .on_input(Message::EditLabel),
+            );
 
             // Time spinners with wrap-around
             let hour_str = format!("{:02}", edit.hour);
@@ -369,25 +365,21 @@ impl AlarmState {
                 .align_y(Alignment::Center)
                 .push(
                     widget::button::icon(widget::icon::from_name("list-remove-symbolic"))
-
                         .on_press(Message::DecrementHour),
                 )
                 .push(widget::text::title3(hour_str))
                 .push(
                     widget::button::icon(widget::icon::from_name("list-add-symbolic"))
-
                         .on_press(Message::IncrementHour),
                 )
                 .push(widget::text::title3(":"))
                 .push(
                     widget::button::icon(widget::icon::from_name("list-remove-symbolic"))
-
                         .on_press(Message::DecrementMinute),
                 )
                 .push(widget::text::title3(minute_str))
                 .push(
                     widget::button::icon(widget::icon::from_name("list-add-symbolic"))
-
                         .on_press(Message::IncrementMinute),
                 );
             col = col.push(time_row);
@@ -466,13 +458,14 @@ impl AlarmState {
                 .align_y(Alignment::Center)
                 .push(
                     widget::button::icon(widget::icon::from_name("list-remove-symbolic"))
-
                         .on_press(Message::EditSnoozeMinutes(snz.saturating_sub(1))),
                 )
-                .push(widget::text::body(fl!("minutes-value", value = snz.to_string())))
+                .push(widget::text::body(fl!(
+                    "minutes-value",
+                    value = snz.to_string()
+                )))
                 .push(
                     widget::button::icon(widget::icon::from_name("list-add-symbolic"))
-
                         .on_press(Message::EditSnoozeMinutes(snz + 1)),
                 );
             col = col.push(snooze_row);
@@ -485,13 +478,14 @@ impl AlarmState {
                 .align_y(Alignment::Center)
                 .push(
                     widget::button::icon(widget::icon::from_name("list-remove-symbolic"))
-
                         .on_press(Message::EditRingMinutes(ring.saturating_sub(1))),
                 )
-                .push(widget::text::body(fl!("minutes-value", value = ring.to_string())))
+                .push(widget::text::body(fl!(
+                    "minutes-value",
+                    value = ring.to_string()
+                )))
                 .push(
                     widget::button::icon(widget::icon::from_name("list-add-symbolic"))
-
                         .on_press(Message::EditRingMinutes(ring + 1)),
                 );
             col = col.push(ring_row);
@@ -513,8 +507,7 @@ impl AlarmState {
                 .push(widget::button::suggested(fl!("save")).on_press(Message::SaveAlarm));
             if let Some(id) = edit.id {
                 actions = actions.push(
-                    widget::button::destructive(fl!("delete"))
-                        .on_press(Message::DeleteAlarm(id)),
+                    widget::button::destructive(fl!("delete")).on_press(Message::DeleteAlarm(id)),
                 );
             }
             col = col.push(actions);

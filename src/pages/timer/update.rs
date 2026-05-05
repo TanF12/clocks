@@ -2,8 +2,8 @@
 //
 // Timer update logic: message handling, countdown, and repeat logic.
 
-use super::model::*;
 use super::Message;
+use super::model::*;
 use crate::fl;
 use std::time::{Duration, Instant};
 

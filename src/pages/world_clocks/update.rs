@@ -4,7 +4,7 @@
 // edit mode, and drag-to-reorder.
 
 use super::model::*;
-use super::{tz_city_name, Message};
+use super::{Message, tz_city_name};
 
 impl WorldClocksState {
     pub fn update(&mut self, message: Message) {

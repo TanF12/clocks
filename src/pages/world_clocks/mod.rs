@@ -27,17 +27,11 @@ pub enum Message {
 /// Extract the city name from a timezone identifier (last segment after `/`).
 fn tz_city_name(tz: Tz) -> String {
     let name = tz.name();
-    name.rsplit('/')
-        .next()
-        .unwrap_or(name)
-        .replace('_', " ")
+    name.rsplit('/').next().unwrap_or(name).replace('_', " ")
 }
 
 /// Extract the region/country name from a timezone identifier (first segment before `/`).
 fn tz_region_name(tz: Tz) -> String {
     let name = tz.name();
-    name.split('/')
-        .next()
-        .unwrap_or(name)
-        .replace('_', " ")
+    name.split('/').next().unwrap_or(name).replace('_', " ")
 }

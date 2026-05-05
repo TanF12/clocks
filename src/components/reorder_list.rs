@@ -20,14 +20,15 @@
 use std::borrow::Cow;
 use std::mem;
 
-use cosmic::iced::clipboard::dnd::{DndAction, DndDestinationRectangle, DndEvent, OfferEvent, SourceEvent};
+use cosmic::iced::advanced::clipboard::IconSurface;
+use cosmic::iced::advanced::widget::{Id, Operation, Tree, tree};
+use cosmic::iced::advanced::{Clipboard, Shell, layout, renderer};
+use cosmic::iced::clipboard::dnd::{
+    DndAction, DndDestinationRectangle, DndEvent, OfferEvent, SourceEvent,
+};
 use cosmic::iced::clipboard::mime::AsMimeTypes;
 use cosmic::iced::id::Internal;
-use cosmic::iced::{mouse, overlay, touch, Length, Point, Rectangle, Size, Vector};
-use cosmic::iced_core::clipboard::IconSurface;
-use cosmic::iced_core::widget::{tree, Operation, Tree};
-use cosmic::iced_core::{self, layout, renderer, Clipboard, Shell};
-use cosmic::iced_runtime::core::id::Id;
+use cosmic::iced::{Length, Point, Rectangle, Size, Vector, mouse, overlay, touch};
 use cosmic::prelude::*;
 use cosmic::{theme, widget};
 
@@ -59,6 +60,9 @@ impl AsMimeTypes for DndIndex {
 /// - building card elements (collapsing the dragged card to a placeholder),
 /// - tracking `dragging_index` in external state,
 /// - applying reorder operations when `on_reorder(from, to)` fires.
+type DragIconBuilder<'a> =
+    Box<dyn Fn(usize, Vector) -> (Element<'static, ()>, tree::State, Vector) + 'a>;
+
 pub struct ReorderList<'a, Message> {
     id: Id,
     item_count: usize,
@@ -68,7 +72,7 @@ pub struct ReorderList<'a, Message> {
     on_reorder: Option<Box<dyn Fn(usize, usize) -> Message + 'a>>,
     on_finish: Option<Message>,
     on_cancel: Option<Message>,
-    drag_icon_builder: Option<Box<dyn Fn(usize, Vector) -> (Element<'static, ()>, tree::State, Vector) + 'a>>,
+    drag_icon_builder: Option<DragIconBuilder<'a>>,
 }
 
 impl<'a, Message: Clone + 'static> ReorderList<'a, Message> {
@@ -151,8 +155,7 @@ impl<'a, Message: Clone + 'static> ReorderList<'a, Message> {
         }
         let spacing = theme::spacing().space_xxs as f32;
         let total_spacing = spacing * (self.item_count.saturating_sub(1)) as f32;
-        let item_height =
-            (layout.bounds().height - total_spacing) / self.item_count as f32;
+        let item_height = (layout.bounds().height - total_spacing) / self.item_count as f32;
 
         let mut threshold = layout.bounds().y;
         for i in 0..self.item_count {
@@ -176,8 +179,7 @@ impl<'a, Message: Clone + 'static> ReorderList<'a, Message> {
         }
         let spacing = theme::spacing().space_xxs as f32;
         let total_spacing = spacing * (self.item_count.saturating_sub(1)) as f32;
-        let item_height =
-            (layout.bounds().height - total_spacing) / self.item_count as f32;
+        let item_height = (layout.bounds().height - total_spacing) / self.item_count as f32;
 
         let relative = start_y - layout.bounds().y;
         if relative < 0.0 {
@@ -221,7 +223,8 @@ struct ReorderWidgetState {
     cached_size: Option<Size>,
 }
 
-impl<Message: Clone + 'static> cosmic::iced_core::Widget<Message, cosmic::Theme, cosmic::Renderer>
+impl<Message: Clone + 'static>
+    cosmic::iced::advanced::widget::Widget<Message, cosmic::Theme, cosmic::Renderer>
     for ReorderList<'_, Message>
 {
     fn tag(&self) -> tree::Tag {
@@ -337,25 +340,20 @@ impl<Message: Clone + 'static> cosmic::iced_core::Widget<Message, cosmic::Theme,
                             // Compute offset relative to the dragged item's top-left,
                             // not the whole list widget.
                             let spacing = theme::spacing().space_xxs as f32;
-                            let total_spacing =
-                                spacing * self.item_count.saturating_sub(1) as f32;
-                            let item_height = (layout.bounds().height - total_spacing)
-                                / self.item_count as f32;
-                            let item_top = layout.bounds().y
-                                + index as f32 * (item_height + spacing);
-                            let offset = Vector::new(
-                                start.x - layout.bounds().x,
-                                start.y - item_top,
-                            );
+                            let total_spacing = spacing * self.item_count.saturating_sub(1) as f32;
+                            let item_height =
+                                (layout.bounds().height - total_spacing) / self.item_count as f32;
+                            let item_top =
+                                layout.bounds().y + index as f32 * (item_height + spacing);
+                            let offset =
+                                Vector::new(start.x - layout.bounds().x, start.y - item_top);
                             const DRAG_SCALE: f32 = 0.92;
                             let icon_surface = self.drag_icon_builder.as_ref().map(|builder| {
                                 let scaled_width = bounds.width * DRAG_SCALE;
                                 // Scale the offset so the cursor stays at the same
                                 // relative position on the shrunken card.
-                                let scaled_offset = Vector::new(
-                                    offset.x * DRAG_SCALE,
-                                    offset.y * DRAG_SCALE,
-                                );
+                                let scaled_offset =
+                                    Vector::new(offset.x * DRAG_SCALE, offset.y * DRAG_SCALE);
                                 let (icon_el, icon_state, _) = builder(index, scaled_offset);
                                 IconSurface::new(
                                     widget::container(icon_el)
@@ -365,13 +363,15 @@ impl<Message: Clone + 'static> cosmic::iced_core::Widget<Message, cosmic::Theme,
                                     scaled_offset,
                                 )
                             });
-                            iced_core::clipboard::start_dnd::<
+                            cosmic::iced::advanced::clipboard::start_dnd::<
                                 cosmic::Theme,
                                 cosmic::Renderer,
                             >(
                                 clipboard,
                                 false,
-                                Some(iced_core::clipboard::DndSource::Widget(self.id.clone())),
+                                Some(cosmic::iced::advanced::clipboard::DndSource::Widget(
+                                    self.id.clone(),
+                                )),
                                 icon_surface,
                                 Box::new(DndIndex(index)),
                                 DndAction::Move,
@@ -437,13 +437,10 @@ impl<Message: Clone + 'static> cosmic::iced_core::Widget<Message, cosmic::Theme,
                 cosmic::iced::Event::Dnd(DndEvent::Offer(
                     rectangle,
                     OfferEvent::LeaveDestination | OfferEvent::Leave,
-                )) if *rectangle == Some(my_drag_id) => {
-                    DndOfferState::None
-                }
-                cosmic::iced::Event::Dnd(DndEvent::Offer(
-                    rectangle,
-                    OfferEvent::Data { .. },
-                )) if *rectangle == Some(my_drag_id) => {
+                )) if *rectangle == Some(my_drag_id) => DndOfferState::None,
+                cosmic::iced::Event::Dnd(DndEvent::Offer(rectangle, OfferEvent::Data { .. }))
+                    if *rectangle == Some(my_drag_id) =>
+                {
                     if let Some(ref on_finish) = self.on_finish {
                         shell.publish(on_finish.clone());
                     }
@@ -535,7 +532,7 @@ impl<Message: Clone + 'static> cosmic::iced_core::Widget<Message, cosmic::Theme,
         _state: &Tree,
         layout: layout::Layout<'_>,
         _renderer: &cosmic::Renderer,
-        dnd_rectangles: &mut iced_core::clipboard::DndDestinationRectangles,
+        dnd_rectangles: &mut cosmic::iced::advanced::clipboard::DndDestinationRectangles,
     ) {
         let bounds = layout.bounds();
         dnd_rectangles.push(DndDestinationRectangle {
@@ -556,12 +553,7 @@ impl<Message: Clone + 'static> cosmic::iced_core::Widget<Message, cosmic::Theme,
 impl<'a, Message: Clone + 'static> ReorderList<'a, Message> {
     /// Handle a drag motion event: compute the target insertion position and
     /// emit `on_reorder(from, to)` if the dragging index is known.
-    fn handle_drag_motion(
-        &self,
-        shell: &mut Shell<'_, Message>,
-        layout: &layout::Layout,
-        y: f32,
-    ) {
+    fn handle_drag_motion(&self, shell: &mut Shell<'_, Message>, layout: &layout::Layout, y: f32) {
         if let (Some(from), Some(on_reorder)) = (self.dragging_index, &self.on_reorder) {
             let to = self.insertion_index(layout, y);
             if from != to {

@@ -50,7 +50,9 @@ impl AppModel {
         );
 
         col = col.push(widget::divider::horizontal::default());
-        col = col.push(widget::text::title4(fl!("settings-section-confirmation-dialogs")));
+        col = col.push(widget::text::title4(fl!(
+            "settings-section-confirmation-dialogs"
+        )));
 
         col = col.push(
             widget::checkbox(self.confirm_delete_alarm)
@@ -125,10 +127,7 @@ impl AppModel {
 
         // Page shortcuts
         col = col.push(widget::text::title4(fl!("shortcuts-page")));
-        col = col.push(Self::shortcut_row(
-            fl!("shortcuts-start-pause"),
-            &["Space"],
-        ));
+        col = col.push(Self::shortcut_row(fl!("shortcuts-start-pause"), &["Space"]));
         col = col.push(Self::shortcut_row(fl!("shortcuts-lap"), &["Enter"]));
         col = col.push(Self::shortcut_row(fl!("shortcuts-reset"), &["Delete"]));
         col = col.push(Self::shortcut_row(
@@ -203,7 +202,7 @@ impl AppModel {
 
     pub(super) fn shortcut_row<'a>(action: String, keys: &'a [&'a str]) -> Element<'a, Message> {
         use cosmic::iced::widget::container as iced_container;
-        use cosmic::iced_core::{Background, Border};
+        use cosmic::iced::{Background, Border};
 
         let keys_row = keys.iter().fold(
             widget::row::with_capacity(keys.len() * 2)

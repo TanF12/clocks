@@ -48,11 +48,23 @@ pub struct PomodoroTimer {
 }
 
 impl PomodoroTimer {
-    pub fn from_config(id: u32, label: String, work: u32, short_break: u32, long_break: u32) -> Self {
+    pub fn from_config(
+        id: u32,
+        label: String,
+        work: u32,
+        short_break: u32,
+        long_break: u32,
+    ) -> Self {
         Self::new(id, label, work, short_break, long_break)
     }
 
-    pub(super) fn new(id: u32, label: String, work: u32, short_break: u32, long_break: u32) -> Self {
+    pub(super) fn new(
+        id: u32,
+        label: String,
+        work: u32,
+        short_break: u32,
+        long_break: u32,
+    ) -> Self {
         let work_dur = Duration::from_secs(work as u64 * 60);
         Self {
             id,

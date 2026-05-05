@@ -4,13 +4,7 @@ use cosmic::widget;
 use std::borrow::Cow;
 
 /// Available notification sounds (built-in options + "Custom..." at the end)
-pub const SOUND_OPTIONS: &[&str] = &[
-    "Bell",
-    "Chime",
-    "Alert",
-    "Gentle",
-    "Custom...",
-];
+pub const SOUND_OPTIONS: &[&str] = &["Bell", "Chime", "Alert", "Gentle", "Custom..."];
 
 /// Find the dropdown index for a given sound name.
 /// Returns the index in SOUND_OPTIONS, or None if it's a custom path.
@@ -48,28 +42,23 @@ pub fn sound_selector_view<'a, M: Clone + 'static + Send + Sync>(
     let custom_path = current.to_string();
     let custom_insert = is_custom_path;
 
-    let mut col = widget::column::with_capacity(2)
-        .spacing(6);
+    let mut col = widget::column::with_capacity(2).spacing(6);
 
     col = col.push(widget::text::body(label));
 
     col = col.push(
-        widget::dropdown(
-            Cow::Owned(options.clone()),
-            selected,
-            move |idx| {
-                let last = options.len() - 1;
-                if idx == last {
-                    // "Custom..." is always the last entry
-                    on_custom.clone()
-                } else if custom_insert && idx == last - 1 {
-                    // Re-selected the current custom file
-                    on_select(custom_path.clone())
-                } else {
-                    on_select(SOUND_OPTIONS[idx].to_string())
-                }
-            },
-        )
+        widget::dropdown(Cow::Owned(options.clone()), selected, move |idx| {
+            let last = options.len() - 1;
+            if idx == last {
+                // "Custom..." is always the last entry
+                on_custom.clone()
+            } else if custom_insert && idx == last - 1 {
+                // Re-selected the current custom file
+                on_select(custom_path.clone())
+            } else {
+                on_select(SOUND_OPTIONS[idx].to_string())
+            }
+        })
         .width(cosmic::iced::Length::Fill),
     );
 

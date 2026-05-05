@@ -4,14 +4,14 @@
 // and the file-chooser dialog for custom sounds.
 
 use super::{CustomSoundTarget, Message};
-use cosmic::iced::keyboard::{self, key::Named, Key};
-use cosmic::iced_futures;
+use cosmic::iced;
+use cosmic::iced::keyboard::{self, Key, key::Named};
 use cosmic::prelude::*;
 use std::time::Duration;
 
 pub(super) fn tick_subscription() -> impl futures_util::Stream<Item = Message> {
     use futures_util::SinkExt;
-    iced_futures::stream::channel(1, async |mut emitter| {
+    iced::stream::channel(1, async |mut emitter| {
         let mut interval = tokio::time::interval(Duration::from_millis(100));
         loop {
             interval.tick().await;
@@ -30,9 +30,7 @@ pub(super) fn input_subscription(
         return None;
     }
 
-    let cosmic::iced::Event::Keyboard(keyboard::Event::KeyPressed {
-        key, modifiers, ..
-    }) = event
+    let cosmic::iced::Event::Keyboard(keyboard::Event::KeyPressed { key, modifiers, .. }) = event
     else {
         return None;
     };
@@ -97,9 +95,7 @@ pub(super) fn input_subscription(
     }
 }
 
-pub(super) fn open_sound_file_dialog(
-    target: CustomSoundTarget,
-) -> Task<cosmic::Action<Message>> {
+pub(super) fn open_sound_file_dialog(target: CustomSoundTarget) -> Task<cosmic::Action<Message>> {
     cosmic::task::future(async move {
         let dialog = cosmic::dialog::file_chooser::open::Dialog::new()
             .title(crate::fl!("choose-sound-file"));

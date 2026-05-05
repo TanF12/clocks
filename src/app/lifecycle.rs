@@ -5,10 +5,9 @@
 use super::persistence::{restore_alarms, restore_pomodoros, restore_timers, restore_world_clocks};
 use super::subscriptions::{input_subscription, open_sound_file_dialog, tick_subscription};
 use super::{
-    AppModel, ConfirmationCategory, CustomSoundTarget, DestructiveAction, MenuAction, Message,
-    APP_ICON, REPOSITORY,
+    APP_ICON, AppModel, ConfirmationCategory, CustomSoundTarget, DestructiveAction, MenuAction,
+    Message, REPOSITORY,
 };
-use cosmic::widget::toaster;
 use crate::config::Config;
 use crate::fl;
 use crate::pages::{ContextPage, Page, alarm, pomodoro, stopwatch, timer, world_clocks};
@@ -16,9 +15,10 @@ use cosmic::app::context_drawer;
 use cosmic::cosmic_config::{self, CosmicConfigEntry};
 use cosmic::iced::Length;
 use cosmic::iced::Subscription;
-use cosmic::iced_futures::event::listen_raw;
-use cosmic::widget::{self, about::About, icon, menu, nav_bar};
+use cosmic::iced::event::listen_raw;
 use cosmic::prelude::*;
+use cosmic::widget::toaster;
+use cosmic::widget::{self, about::About, icon, menu, nav_bar};
 use std::collections::HashMap;
 
 // --- Application trait (View + Update lifecycle) ---
@@ -232,7 +232,10 @@ impl cosmic::Application for AppModel {
                 .view(self.use_12h, self.auto_sort_world_clocks)
                 .map(Message::WorldClocks),
             Some(Page::Stopwatch) => self.stopwatch.view().map(Message::Stopwatch),
-            Some(Page::Alarm) => self.alarm.view(self.use_12h, self.auto_sort_alarms).map(Message::Alarm),
+            Some(Page::Alarm) => self
+                .alarm
+                .view(self.use_12h, self.auto_sort_alarms)
+                .map(Message::Alarm),
             Some(Page::Timer) => self.timer.view().map(Message::Timer),
             Some(Page::Pomodoro) => self.pomodoro.view().map(Message::Pomodoro),
             None => widget::text::body(fl!("select-a-view")).into(),
@@ -243,7 +246,7 @@ impl cosmic::Application for AppModel {
             .height(Length::Fill)
             .padding(16);
 
-        toaster::toaster(&self.toasts, page).into()
+        toaster::toaster(&self.toasts, page)
     }
 
     fn dialog(&self) -> Option<Element<'_, Self::Message>> {
@@ -313,13 +316,10 @@ impl cosmic::Application for AppModel {
                     self.context_page = ContextPage::WorldClocksAdd;
                     self.core.window.show_context = true;
                     self.save_state();
-                    return widget::text_input::focus(widget::Id::new(
-                        "world-clocks-search-input",
-                    ));
+                    return widget::text_input::focus(widget::Id::new("world-clocks-search-input"));
                 }
                 world_clocks::Message::RemoveClock(id) => {
-                    if self.confirm_delete_world_clock
-                        && self.pending_destructive_action.is_none()
+                    if self.confirm_delete_world_clock && self.pending_destructive_action.is_none()
                     {
                         let id = *id;
                         self.pending_destructive_action =
@@ -339,13 +339,13 @@ impl cosmic::Application for AppModel {
                     let id = *id;
                     self.alarm.update(msg.clone(), self.use_12h);
                     // Show toast when alarm is enabled
-                    if let Some(alarm) = self.alarm.alarms.iter().find(|a| a.id == id) {
-                        if alarm.is_enabled {
-                            let alarm = alarm.clone();
-                            let task = self.push_alarm_toast(&alarm);
-                            self.save_state();
-                            return task;
-                        }
+                    if let Some(alarm) = self.alarm.alarms.iter().find(|a| a.id == id)
+                        && alarm.is_enabled
+                    {
+                        let alarm = alarm.clone();
+                        let task = self.push_alarm_toast(&alarm);
+                        self.save_state();
+                        return task;
                     }
                 }
                 alarm::Message::DeleteAlarm(id) => {
@@ -377,13 +377,13 @@ impl cosmic::Application for AppModel {
                     self.alarm.update(msg.clone(), self.use_12h);
                     self.core.window.show_context = false;
                     // Show toast for newly created alarm (enabled by default)
-                    if let Some(alarm) = self.alarm.alarms.last() {
-                        if alarm.is_enabled {
-                            let alarm = alarm.clone();
-                            let task = self.push_alarm_toast(&alarm);
-                            self.save_state();
-                            return task;
-                        }
+                    if let Some(alarm) = self.alarm.alarms.last()
+                        && alarm.is_enabled
+                    {
+                        let alarm = alarm.clone();
+                        let task = self.push_alarm_toast(&alarm);
+                        self.save_state();
+                        return task;
                     }
                 }
                 alarm::Message::BrowseCustomSound => {
@@ -643,7 +643,8 @@ impl cosmic::Application for AppModel {
                 }
                 match self.pending_destructive_action.take() {
                     Some(DestructiveAction::DeleteAlarm(id)) => {
-                        self.alarm.update(alarm::Message::DeleteAlarm(id), self.use_12h);
+                        self.alarm
+                            .update(alarm::Message::DeleteAlarm(id), self.use_12h);
                         if self.context_page == ContextPage::AlarmEdit {
                             self.alarm.editing = None;
                             self.core.window.show_context = false;
@@ -653,7 +654,8 @@ impl cosmic::Application for AppModel {
                         self.timer.update(timer::Message::DeleteTimer(id));
                     }
                     Some(DestructiveAction::DeleteWorldClock(id)) => {
-                        self.world_clocks.update(world_clocks::Message::RemoveClock(id));
+                        self.world_clocks
+                            .update(world_clocks::Message::RemoveClock(id));
                     }
                     Some(DestructiveAction::DeletePomodoro(id)) => {
                         self.pomodoro.update(pomodoro::Message::Delete(id));
@@ -675,21 +677,19 @@ impl cosmic::Application for AppModel {
                 self.confirm_dialog_dont_show_again = val;
             }
 
-            Message::ToggleConfirmationSetting(category, enabled) => {
-                match category {
-                    ConfirmationCategory::DeleteAlarm => self.confirm_delete_alarm = enabled,
-                    ConfirmationCategory::DeleteTimer => self.confirm_delete_timer = enabled,
-                    ConfirmationCategory::DeleteWorldClock => {
-                        self.confirm_delete_world_clock = enabled;
-                    }
-                    ConfirmationCategory::DeletePomodoro => {
-                        self.confirm_delete_pomodoro = enabled;
-                    }
-                    ConfirmationCategory::ClearStopwatch => {
-                        self.confirm_clear_stopwatch = enabled;
-                    }
+            Message::ToggleConfirmationSetting(category, enabled) => match category {
+                ConfirmationCategory::DeleteAlarm => self.confirm_delete_alarm = enabled,
+                ConfirmationCategory::DeleteTimer => self.confirm_delete_timer = enabled,
+                ConfirmationCategory::DeleteWorldClock => {
+                    self.confirm_delete_world_clock = enabled;
                 }
-            }
+                ConfirmationCategory::DeletePomodoro => {
+                    self.confirm_delete_pomodoro = enabled;
+                }
+                ConfirmationCategory::ClearStopwatch => {
+                    self.confirm_clear_stopwatch = enabled;
+                }
+            },
 
             Message::CloseToast(id) => {
                 self.toasts.remove(id);

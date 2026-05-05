@@ -2,8 +2,8 @@
 //
 // Timer view functions: main page view and sidebar editing form.
 
-use super::model::*;
 use super::Message;
+use super::model::*;
 use crate::components::{format_duration_hms, sound_selector_view};
 use crate::fl;
 use cosmic::iced::{Alignment, Length};
@@ -49,9 +49,16 @@ impl TimerState {
             info_col = info_col.push(widget::text::body(&timer.label));
             if timer.repeat_enabled {
                 let repeat_str = if timer.repeat_count == 0 {
-                    fl!("repeat-progress-infinite", completed = timer.completed_count.to_string())
+                    fl!(
+                        "repeat-progress-infinite",
+                        completed = timer.completed_count.to_string()
+                    )
                 } else {
-                    fl!("repeat-progress", completed = timer.completed_count.to_string(), total = timer.repeat_count.to_string())
+                    fl!(
+                        "repeat-progress",
+                        completed = timer.completed_count.to_string(),
+                        total = timer.repeat_count.to_string()
+                    )
                 };
                 info_col = info_col.push(widget::text::caption(repeat_str));
             }
@@ -81,9 +88,8 @@ impl TimerState {
                         }),
                 );
             } else {
-                ctrl_row = ctrl_row.push(
-                    widget::icon::from_name("object-select-symbolic").size(24),
-                );
+                ctrl_row =
+                    ctrl_row.push(widget::icon::from_name("object-select-symbolic").size(24));
             }
 
             ctrl_row = ctrl_row.push(
@@ -120,12 +126,11 @@ impl TimerState {
 
         // Label
         col = col.push(widget::text::body(fl!("label")));
-        col = col
-            .push(
-                widget::text_input(fl!("timer-label-placeholder"), &self.edit_label)
-                    .id(widget::Id::new("timer-label-input"))
-                    .on_input(Message::EditLabel),
-            );
+        col = col.push(
+            widget::text_input(fl!("timer-label-placeholder"), &self.edit_label)
+                .id(widget::Id::new("timer-label-input"))
+                .on_input(Message::EditLabel),
+        );
 
         // Duration spinners with wrap-around (HH:MM:SS colon format)
         col = col.push(widget::text::body(fl!("duration")));
@@ -139,37 +144,31 @@ impl TimerState {
             .align_y(Alignment::Center)
             .push(
                 widget::button::icon(widget::icon::from_name("list-remove-symbolic"))
-
                     .on_press(Message::EditHours(if h == 0 { 23 } else { h - 1 })),
             )
             .push(widget::text::title3(format!("{:02}", h)))
             .push(
                 widget::button::icon(widget::icon::from_name("list-add-symbolic"))
-
                     .on_press(Message::EditHours((h + 1) % 24)),
             )
             .push(widget::text::title3(":"))
             .push(
                 widget::button::icon(widget::icon::from_name("list-remove-symbolic"))
-
                     .on_press(Message::EditMinutes(if m == 0 { 59 } else { m - 1 })),
             )
             .push(widget::text::title3(format!("{:02}", m)))
             .push(
                 widget::button::icon(widget::icon::from_name("list-add-symbolic"))
-
                     .on_press(Message::EditMinutes((m + 1) % 60)),
             )
             .push(widget::text::title3(":"))
             .push(
                 widget::button::icon(widget::icon::from_name("list-remove-symbolic"))
-
                     .on_press(Message::EditSeconds(if s == 0 { 59 } else { s - 1 })),
             )
             .push(widget::text::title3(format!("{:02}", s)))
             .push(
                 widget::button::icon(widget::icon::from_name("list-add-symbolic"))
-
                     .on_press(Message::EditSeconds((s + 1) % 60)),
             );
         col = col.push(dur_row);
@@ -198,13 +197,11 @@ impl TimerState {
                 .push(widget::text::body(fl!("repeat-count")))
                 .push(
                     widget::button::icon(widget::icon::from_name("list-remove-symbolic"))
-
                         .on_press(Message::EditRepeatCount(c.saturating_sub(1))),
                 )
                 .push(widget::text::title4(count_label))
                 .push(
                     widget::button::icon(widget::icon::from_name("list-add-symbolic"))
-
                         .on_press(Message::EditRepeatCount(c + 1)),
                 );
             col = col.push(count_row);

@@ -2,8 +2,8 @@
 //
 // Pomodoro update logic: message handling, session transitions, and timer control.
 
-use super::model::*;
 use super::Message;
+use super::model::*;
 use crate::fl;
 use std::time::{Duration, Instant};
 
@@ -160,13 +160,13 @@ impl PomodoroState {
                     if timer.is_running
                         && let Some(start) = timer.start_instant
                     {
-                        timer.remaining =
-                            timer.started_remaining.saturating_sub(start.elapsed());
+                        timer.remaining = timer.started_remaining.saturating_sub(start.elapsed());
                         if timer.remaining == Duration::ZERO {
                             let prev_type = timer.session_type;
                             timer.advance_session();
                             notifications.push((
-                                fl!("pomodoro-transition",
+                                fl!(
+                                    "pomodoro-transition",
                                     label = timer.label.clone(),
                                     prev = prev_type.display_name(),
                                     next = timer.session_type.display_name()

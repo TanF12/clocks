@@ -2,8 +2,8 @@
 //
 // Stopwatch update logic: start, stop, lap, reset, and history management.
 
-use super::model::*;
 use super::Message;
+use super::model::*;
 use crate::fl;
 use std::time::{Duration, Instant};
 

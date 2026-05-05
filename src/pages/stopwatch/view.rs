@@ -2,20 +2,30 @@
 //
 // Stopwatch view functions: main page view and history sidebar.
 
-use super::model::*;
 use super::Message;
+use super::model::*;
 use crate::components::{format_duration, format_duration_parts};
 use crate::fl;
-use cosmic::iced::font::Weight;
+use cosmic::iced::font::{Family, Weight};
 use cosmic::iced::{Alignment, Color, Length};
 use cosmic::prelude::*;
 use cosmic::widget;
 use std::time::Duration;
 
-/// Font weight 300 (Light) for the hero time display.
-fn light_font() -> cosmic::iced::Font {
+/// Font weight 300 (Light) and Monospace for the hero time display.
+fn light_mono_font() -> cosmic::iced::Font {
     cosmic::iced::Font {
+        family: Family::Monospace,
         weight: Weight::Light,
+        ..cosmic::font::default()
+    }
+}
+
+/// Font weight Bold and Monospace for the seconds display.
+fn bold_mono_font() -> cosmic::iced::Font {
+    cosmic::iced::Font {
+        family: Family::Monospace,
+        weight: Weight::Bold,
         ..cosmic::font::default()
     }
 }
@@ -40,9 +50,9 @@ impl StopwatchState {
         let (prefix, seconds, suffix) = format_duration_parts(self.elapsed);
         let time_row = widget::row::with_capacity(3)
             .align_y(Alignment::Center)
-            .push(widget::text(prefix).size(72.0).font(light_font()))
-            .push(widget::text(seconds).size(72.0).font(cosmic::font::bold()))
-            .push(widget::text(suffix).size(72.0).font(light_font()));
+            .push(widget::text(prefix).size(72.0).font(light_mono_font()))
+            .push(widget::text(seconds).size(72.0).font(bold_mono_font()))
+            .push(widget::text(suffix).size(72.0).font(light_mono_font()));
         let time_display = widget::container(time_row)
             .align_x(Alignment::Center)
             .width(Length::Fill)
@@ -72,8 +82,7 @@ impl StopwatchState {
             )
         };
 
-        let primary_btn_inner =
-            widget::icon::from_name(primary_icon).size(32).icon();
+        let primary_btn_inner = widget::icon::from_name(primary_icon).size(32).icon();
 
         let primary_btn = widget::tooltip(
             widget::button::custom(
@@ -114,7 +123,9 @@ impl StopwatchState {
                 .into(),
             )
         } else if has_run {
-            let icon = widget::icon::from_name("edit-undo-symbolic").size(20).icon();
+            let icon = widget::icon::from_name("edit-undo-symbolic")
+                .size(20)
+                .icon();
             Some(
                 widget::tooltip(
                     widget::button::custom(
@@ -155,8 +166,7 @@ impl StopwatchState {
             .into()
         };
 
-        let secondary_slot: Element<'_, Message> =
-            secondary_btn.unwrap_or_else(invisible_btn);
+        let secondary_slot: Element<'_, Message> = secondary_btn.unwrap_or_else(invisible_btn);
         let left_spacer: Element<'_, Message> = invisible_btn();
 
         let controls = widget::row::with_capacity(3)
@@ -189,7 +199,11 @@ impl StopwatchState {
                 widget::container(self.laps_view())
                     .width(content_width)
                     .align_x(Alignment::Center)
-                    .apply(|c| widget::container(c).align_x(Alignment::Center).width(Length::Fill)),
+                    .apply(|c| {
+                        widget::container(c)
+                            .align_x(Alignment::Center)
+                            .width(Length::Fill)
+                    }),
             );
 
             col.into()
@@ -312,8 +326,7 @@ impl StopwatchState {
                 let id = record.id;
 
                 // Card content
-                let mut card_col =
-                    widget::column::with_capacity(4).spacing(spacing.space_xxs);
+                let mut card_col = widget::column::with_capacity(4).spacing(spacing.space_xxs);
 
                 // Editable label
                 card_col = card_col.push(
@@ -349,20 +362,16 @@ impl StopwatchState {
                 let card = widget::container(card_col)
                     .padding(spacing.space_s)
                     .width(Length::Fill)
-                    .class(cosmic::theme::Container::Custom(Box::new(
-                        |theme| {
-                            let mut style =
-                                cosmic::iced_widget::container::Catalog::style(
-                                    theme,
-                                    &cosmic::theme::Container::Primary,
-                                );
-                            style.border.radius = theme.cosmic().radius_s().into();
-                            style.background = Some(
-                                Color::from(theme.cosmic().bg_component_color()).into(),
-                            );
-                            style
-                        },
-                    )));
+                    .class(cosmic::theme::Container::Custom(Box::new(|theme| {
+                        let mut style = cosmic::iced::widget::container::Catalog::style(
+                            theme,
+                            &cosmic::theme::Container::Primary,
+                        );
+                        style.border.radius = theme.cosmic().radius_s().into();
+                        style.background =
+                            Some(Color::from(theme.cosmic().bg_component_color()).into());
+                        style
+                    })));
 
                 col = col.push(card);
             }

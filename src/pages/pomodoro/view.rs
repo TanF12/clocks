@@ -2,8 +2,8 @@
 //
 // Pomodoro view functions: main page view and settings sidebar.
 
-use super::model::*;
 use super::Message;
+use super::model::*;
 use crate::components::{format_duration, sound_selector_view};
 use crate::fl;
 use cosmic::iced::{Alignment, Length};
@@ -45,9 +45,7 @@ impl PomodoroState {
             let mut label_row = widget::row::with_capacity(3)
                 .spacing(spacing)
                 .align_y(Alignment::Center)
-                .push(
-                    widget::text::title4(&timer.label).width(Length::Fill),
-                );
+                .push(widget::text::title4(&timer.label).width(Length::Fill));
             if !timer.is_running {
                 label_row = label_row.push(
                     widget::button::icon(widget::icon::from_name("edit-symbolic"))
@@ -63,7 +61,8 @@ impl PomodoroState {
             col = col.push(label_row);
 
             // Session info
-            let session_info = fl!("session-info",
+            let session_info = fl!(
+                "session-info",
                 number = timer.session_number.to_string(),
                 session_type = timer.session_type.display_name()
             );
@@ -83,21 +82,22 @@ impl PomodoroState {
                 .align_y(Alignment::Center);
 
             if timer.is_running {
-                controls =
-                    controls.push(widget::button::standard(fl!("pause")).on_press(Message::Pause(id)));
+                controls = controls
+                    .push(widget::button::standard(fl!("pause")).on_press(Message::Pause(id)));
             } else if timer.remaining < timer.started_remaining
                 || (timer.completed_work_sessions > 0 && timer.session_type == SessionType::Work)
             {
                 controls = controls
                     .push(widget::button::suggested(fl!("resume")).on_press(Message::Resume(id)));
             } else {
-                controls =
-                    controls.push(widget::button::suggested(fl!("start")).on_press(Message::Start(id)));
+                controls = controls
+                    .push(widget::button::suggested(fl!("start")).on_press(Message::Start(id)));
             }
 
-            controls = controls.push(widget::button::standard(fl!("skip")).on_press(Message::Skip(id)));
             controls =
-                controls.push(widget::button::destructive(fl!("reset")).on_press(Message::Reset(id)));
+                controls.push(widget::button::standard(fl!("skip")).on_press(Message::Skip(id)));
+            controls = controls
+                .push(widget::button::destructive(fl!("reset")).on_press(Message::Reset(id)));
 
             col = col.push(
                 widget::container(controls)
@@ -106,7 +106,8 @@ impl PomodoroState {
             );
 
             // Progress
-            let progress_text = fl!("progress-info",
+            let progress_text = fl!(
+                "progress-info",
                 completed = timer.completed_work_sessions.to_string(),
                 target = timer.target_sessions.to_string(),
                 focused = (timer.total_focused_secs / 60).to_string()
@@ -142,13 +143,14 @@ impl PomodoroState {
                 .push(widget::text::body(fl!("work-label")).width(Length::Fixed(100.0)))
                 .push(
                     widget::button::icon(widget::icon::from_name("list-remove-symbolic"))
-
                         .on_press(Message::SetDefaultWorkMinutes(w.saturating_sub(5))),
                 )
-                .push(widget::text::body(fl!("minutes-value", value = w.to_string())))
+                .push(widget::text::body(fl!(
+                    "minutes-value",
+                    value = w.to_string()
+                )))
                 .push(
                     widget::button::icon(widget::icon::from_name("list-add-symbolic"))
-
                         .on_press(Message::SetDefaultWorkMinutes(w + 5)),
                 );
             col = col.push(work_row);
@@ -160,13 +162,14 @@ impl PomodoroState {
                 .push(widget::text::body(fl!("short-break-label")).width(Length::Fixed(100.0)))
                 .push(
                     widget::button::icon(widget::icon::from_name("list-remove-symbolic"))
-
                         .on_press(Message::SetDefaultShortBreakMinutes(sb.saturating_sub(1))),
                 )
-                .push(widget::text::body(fl!("minutes-value", value = sb.to_string())))
+                .push(widget::text::body(fl!(
+                    "minutes-value",
+                    value = sb.to_string()
+                )))
                 .push(
                     widget::button::icon(widget::icon::from_name("list-add-symbolic"))
-
                         .on_press(Message::SetDefaultShortBreakMinutes(sb + 1)),
                 );
             col = col.push(short_row);
@@ -178,13 +181,14 @@ impl PomodoroState {
                 .push(widget::text::body(fl!("long-break-label")).width(Length::Fixed(100.0)))
                 .push(
                     widget::button::icon(widget::icon::from_name("list-remove-symbolic"))
-
                         .on_press(Message::SetDefaultLongBreakMinutes(lb.saturating_sub(1))),
                 )
-                .push(widget::text::body(fl!("minutes-value", value = lb.to_string())))
+                .push(widget::text::body(fl!(
+                    "minutes-value",
+                    value = lb.to_string()
+                )))
                 .push(
                     widget::button::icon(widget::icon::from_name("list-add-symbolic"))
-
                         .on_press(Message::SetDefaultLongBreakMinutes(lb + 1)),
                 );
             col = col.push(long_row);
@@ -226,13 +230,14 @@ impl PomodoroState {
                 .push(widget::text::body(fl!("work-label")).width(Length::Fixed(100.0)))
                 .push(
                     widget::button::icon(widget::icon::from_name("list-remove-symbolic"))
-
                         .on_press(Message::SetDefaultWorkMinutes(w.saturating_sub(5))),
                 )
-                .push(widget::text::body(fl!("minutes-value", value = w.to_string())))
+                .push(widget::text::body(fl!(
+                    "minutes-value",
+                    value = w.to_string()
+                )))
                 .push(
                     widget::button::icon(widget::icon::from_name("list-add-symbolic"))
-
                         .on_press(Message::SetDefaultWorkMinutes(w + 5)),
                 );
             col = col.push(work_row);
@@ -244,13 +249,14 @@ impl PomodoroState {
                 .push(widget::text::body(fl!("short-break-label")).width(Length::Fixed(100.0)))
                 .push(
                     widget::button::icon(widget::icon::from_name("list-remove-symbolic"))
-
                         .on_press(Message::SetDefaultShortBreakMinutes(sb.saturating_sub(1))),
                 )
-                .push(widget::text::body(fl!("minutes-value", value = sb.to_string())))
+                .push(widget::text::body(fl!(
+                    "minutes-value",
+                    value = sb.to_string()
+                )))
                 .push(
                     widget::button::icon(widget::icon::from_name("list-add-symbolic"))
-
                         .on_press(Message::SetDefaultShortBreakMinutes(sb + 1)),
                 );
             col = col.push(short_row);
@@ -262,13 +268,14 @@ impl PomodoroState {
                 .push(widget::text::body(fl!("long-break-label")).width(Length::Fixed(100.0)))
                 .push(
                     widget::button::icon(widget::icon::from_name("list-remove-symbolic"))
-
                         .on_press(Message::SetDefaultLongBreakMinutes(lb.saturating_sub(1))),
                 )
-                .push(widget::text::body(fl!("minutes-value", value = lb.to_string())))
+                .push(widget::text::body(fl!(
+                    "minutes-value",
+                    value = lb.to_string()
+                )))
                 .push(
                     widget::button::icon(widget::icon::from_name("list-add-symbolic"))
-
                         .on_press(Message::SetDefaultLongBreakMinutes(lb + 1)),
                 );
             col = col.push(long_row);

@@ -8,8 +8,8 @@ use super::{AppModel, Message};
 use crate::audio;
 use crate::fl;
 use crate::pages::{Page, alarm, pomodoro, stopwatch, timer};
-use cosmic::cosmic_config::CosmicConfigEntry;
 use chrono::{Datelike, Local, NaiveTime, Offset, TimeZone, Timelike, Utc};
+use cosmic::cosmic_config::CosmicConfigEntry;
 use cosmic::prelude::*;
 use cosmic::widget::{self, toaster};
 use std::sync::Arc;
@@ -77,9 +77,7 @@ impl AppModel {
 
     /// Sort alarms by time (hour, minute).
     pub(super) fn sort_alarms(&mut self) {
-        self.alarm
-            .alarms
-            .sort_by(|a, b| (a.hour, a.minute).cmp(&(b.hour, b.minute)));
+        self.alarm.alarms.sort_by_key(|a| (a.hour, a.minute));
     }
 
     /// Sort world clocks by UTC offset so that:
@@ -227,13 +225,12 @@ impl AppModel {
 
     pub(super) fn handle_page_shortcut_delete(&mut self) -> Task<cosmic::Action<Message>> {
         match self.nav.active_data::<Page>() {
-            Some(Page::Stopwatch) => {
+            Some(Page::Stopwatch)
                 if !self.stopwatch.is_running
-                    && self.stopwatch.elapsed > std::time::Duration::ZERO
-                {
-                    self.stopwatch.update(stopwatch::Message::Reset);
-                    self.save_state();
-                }
+                    && self.stopwatch.elapsed > std::time::Duration::ZERO =>
+            {
+                self.stopwatch.update(stopwatch::Message::Reset);
+                self.save_state();
             }
             Some(Page::Timer) => {
                 if let Some(t) = self.active_timer() {
@@ -264,12 +261,11 @@ impl AppModel {
                 self.context_page = crate::pages::ContextPage::WorldClocksAdd;
                 self.core.window.show_context = true;
                 self.save_state();
-                return widget::text_input::focus(widget::Id::new(
-                    "world-clocks-search-input",
-                ));
+                return widget::text_input::focus(widget::Id::new("world-clocks-search-input"));
             }
             Some(Page::Alarm) => {
-                self.alarm.update(alarm::Message::StartNewAlarm, self.use_12h);
+                self.alarm
+                    .update(alarm::Message::StartNewAlarm, self.use_12h);
                 self.context_page = crate::pages::ContextPage::AlarmEdit;
                 self.core.window.show_context = true;
                 self.save_state();
@@ -311,10 +307,13 @@ impl AppModel {
     }
 
     /// Push a toast showing how long until the given alarm fires.
-    pub(super) fn push_alarm_toast(&mut self, alarm: &alarm::AlarmEntry) -> Task<cosmic::Action<Message>> {
+    pub(super) fn push_alarm_toast(
+        &mut self,
+        alarm: &alarm::AlarmEntry,
+    ) -> Task<cosmic::Action<Message>> {
         let now = Local::now();
-        let alarm_time = NaiveTime::from_hms_opt(alarm.hour as u32, alarm.minute as u32, 0)
-            .unwrap_or_default();
+        let alarm_time =
+            NaiveTime::from_hms_opt(alarm.hour as u32, alarm.minute as u32, 0).unwrap_or_default();
         let now_time = now.time();
 
         // Compute minutes until next occurrence
@@ -384,7 +383,9 @@ impl AppModel {
             )
         };
 
-        self.toasts.push(toaster::Toast::new(message)).map(cosmic::action::app)
+        self.toasts
+            .push(toaster::Toast::new(message))
+            .map(cosmic::action::app)
     }
 
     pub(super) fn update_title(&mut self) -> Task<cosmic::Action<Message>> {

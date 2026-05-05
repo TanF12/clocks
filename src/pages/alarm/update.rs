@@ -2,8 +2,8 @@
 //
 // Alarm update logic: message handling, trigger checks, snooze, and ringing.
 
-use super::model::*;
 use super::Message;
+use super::model::*;
 use crate::fl;
 use std::time::Instant;
 
@@ -247,8 +247,7 @@ impl AlarmState {
                         sound: ringing.sound,
                         ring_minutes: (ringing.ring_secs / 60).max(1) as u8,
                         snooze_minutes: ringing.snooze_minutes,
-                        retrigger_at: Instant::now()
-                            + std::time::Duration::from_secs(snooze_secs),
+                        retrigger_at: Instant::now() + std::time::Duration::from_secs(snooze_secs),
                     });
                 }
             }
