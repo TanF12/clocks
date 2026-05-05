@@ -62,7 +62,7 @@ check-json: (check '--message-format=json')
 # Install icon and desktop entry to user's local data dir so the system
 # can resolve the app icon when running via `cargo run` or `just run`.
 install-local:
-    install -Dm0644 {{ 'resources' / desktop }} {{ local-data-dir / 'applications' / desktop }}
+    install -Dm0644 {{ 'resources' / 'app.desktop' }} {{ local-data-dir / 'applications' / desktop }}
     install -Dm0644 {{ 'resources' / 'icons' / 'hicolor' / 'scalable' / 'apps' / 'icon.svg' }} {{ local-data-dir / 'icons' / 'hicolor' / 'scalable' / 'apps' / icon-svg }}
     -update-desktop-database {{ local-data-dir / 'applications' }}
     -gtk-update-icon-cache -f {{ local-data-dir / 'icons' / 'hicolor' }}
@@ -74,8 +74,8 @@ run *args: install-local
 # Installs files
 install:
     install -Dm0755 {{ cargo-target-dir / 'release' / name }} {{bin-dst}}
-    install -Dm0644 {{ 'resources' / desktop }} {{desktop-dst}}
-    install -Dm0644 {{ 'resources' / appdata }} {{appdata-dst}}
+    install -Dm0644 {{ 'resources' / 'app.desktop' }} {{desktop-dst}}
+    install -Dm0644 {{ 'resources' / 'app.metainfo.xml' }} {{appdata-dst}}
     install -Dm0644 {{ 'resources' / 'icons' / 'hicolor' / 'scalable' / 'apps' / 'icon.svg' }} {{icon-svg-dst}}
 
 # Uninstalls installed files
